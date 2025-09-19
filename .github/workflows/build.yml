@@ -5,6 +5,12 @@ on:
     - cron: "0 0,6,12,18 * * *"  # 每天 4 次（UTC）
   workflow_dispatch:
 
+# 部署 GitHub Pages 需要的权限（不需要写代码仓库）
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,25 +31,18 @@ jobs:
         run: |
           python scripts/build_feeds.py
 
-      - name: Commit feeds
-        run: |
-          git config user.name "feed-bot"
-          git config user.email "feed-bot@users.noreply.github.com"
-          git add feeds/*.xml || true
-          git commit -m "update feeds" || echo "no changes"
-          git push
+      # 直接把当前目录打包为 Pages 制品（包含生成的 feeds/*.xml）
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .  # 如果只想发布 feeds 目录，改为 `feeds`
 
-  pages:
+  deploy:
     needs: build
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-      - uses: actions/deploy-pages@v4
+      - id: deployment
+        uses: actions/deploy-pages@v4

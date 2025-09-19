@@ -2,10 +2,9 @@ name: Build & Publish Feeds
 
 on:
   schedule:
-    - cron: "0 0,6,12,18 * * *"  # 每天 4 次（UTC）
+    - cron: "0 0,6,12,18 * * *"   # 每天 4 次（UTC）
   workflow_dispatch:
 
-# 部署 GitHub Pages 需要的权限（不需要写代码仓库）
 permissions:
   contents: read
   pages: write
@@ -30,9 +29,20 @@ jobs:
       - name: Build feeds
         run: |
           python scripts/build_feeds.py
+          # 证明文件已生成
+          echo "=== TREE ==="
+          ls -lah
+          echo "=== FEEDS TREE ==="
+          ls -lah feeds || true
+          # 防止 Jekyll 误处理
+          touch feeds/.nojekyll
+          # 打印每个 XML 的前几行
+          for f in feeds/*.xml; do
+            echo "=== HEAD: $f ==="
+            head -n 20 "$f" || true
+          done
 
-      # 直接把当前目录打包为 Pages 制品（包含生成的 feeds/*.xml）
-      - name: Upload Pages artifact
+      - name: Upload Pages artifact (only feeds/)
         uses: actions/upload-pages-artifact@v3
         with:
           path: feeds

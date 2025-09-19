@@ -35,7 +35,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .  # 如果只想发布 feeds 目录，改为 `feeds`
+          path: feeds
 
   deploy:
     needs: build
